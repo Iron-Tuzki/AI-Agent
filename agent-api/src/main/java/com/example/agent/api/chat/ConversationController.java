@@ -1,9 +1,11 @@
 package com.example.agent.api.chat;
 
 import com.example.agent.api.common.ApiResponse;
+import com.example.agent.api.common.ResponseCode;
 import com.example.agent.domain.chat.ConversationMessage;
 import com.example.agent.domain.chat.Conversation;
 import com.example.agent.domain.chat.ConversationService;
+import org.apache.logging.log4j.Logger;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +22,7 @@ public class ConversationController {
 
     private final ConversationService conversationService;
 
+
     public ConversationController(ConversationService conversationService) {
         this.conversationService = conversationService;
     }
@@ -31,7 +34,11 @@ public class ConversationController {
      */
     @GetMapping
     public ApiResponse<List<Conversation>> listConversations() {
-        return ApiResponse.ok(conversationService.listConversations());
+        try {
+            return ApiResponse.ok(conversationService.listConversations());
+        } catch (Exception e) {
+            return ApiResponse.fail(ResponseCode.BUSINESS_ERROR, e.getMessage());
+        }
     }
 
     /**

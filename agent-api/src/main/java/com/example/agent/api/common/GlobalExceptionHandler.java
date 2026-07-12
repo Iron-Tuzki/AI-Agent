@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
                 .findFirst()
                 .map(error -> error.getField() + " " + error.getDefaultMessage())
                 .orElse("请求参数不合法");
-        return ResponseEntity.badRequest().body(ApiResponse.fail("BAD_REQUEST", message));
+        return ResponseEntity.badRequest().body(ApiResponse.fail(ResponseCode.BAD_REQUEST, message));
     }
 
     /**
@@ -36,7 +36,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(AgentBusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleAgentBusinessException(AgentBusinessException exception) {
-        return ResponseEntity.badRequest().body(ApiResponse.fail("BUSINESS_ERROR", exception.getMessage()));
+        return ResponseEntity.badRequest().body(ApiResponse.fail(ResponseCode.BUSINESS_ERROR, exception.getMessage()));
     }
 
     /**
@@ -48,6 +48,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception exception) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.fail("SYSTEM_ERROR", "系统内部异常"));
+                .body(ApiResponse.fail(ResponseCode.SYSTEM_ERROR, "系统内部异常"));
     }
 }
