@@ -8,6 +8,8 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.List;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 
 /**
  * MyBatis-Plus 会话仓储实现，用于将会话领域对象保存到数据库。
@@ -38,6 +40,15 @@ public class MyBatisConversationRepository implements ConversationRepository {
         entity.setId(conversationId);
         entity.setUpdatedAt(updatedAt);
         conversationMapper.updateById(entity);
+    }
+
+    @Override
+    public List<Conversation> findAllOrderByUpdatedAtDesc() {
+        return conversationMapper.selectList(new QueryWrapper<ConversationEntity>()
+                        .orderByDesc("updated_at"))
+                .stream()
+                .map(this::toDomain)
+                .toList();
     }
 
     private Conversation toDomain(ConversationEntity entity) {

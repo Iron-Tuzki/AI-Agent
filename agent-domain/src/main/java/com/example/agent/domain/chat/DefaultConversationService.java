@@ -23,6 +23,11 @@ public class DefaultConversationService implements ConversationService {
     }
 
     @Override
+    public String ensureConversation(AiChatRequest request) {
+        return resolveConversationId(request, LocalDateTime.now());
+    }
+
+    @Override
     public String saveTurn(AiChatRequest request, AiChatResult result) {
         LocalDateTime now = LocalDateTime.now();
         String conversationId = resolveConversationId(request, now);
@@ -62,6 +67,11 @@ public class DefaultConversationService implements ConversationService {
         conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new AgentBusinessException("会话不存在：" + conversationId));
         return messageRepository.findByConversationId(conversationId);
+    }
+
+    @Override
+    public List<Conversation> listConversations() {
+        return conversationRepository.findAllOrderByUpdatedAtDesc();
     }
 
     private String resolveConversationId(AiChatRequest request, LocalDateTime now) {

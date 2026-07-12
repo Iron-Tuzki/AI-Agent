@@ -8,6 +8,14 @@ import java.util.List;
 public interface ConversationService {
 
     /**
+     * 确保聊天会话存在，为流式响应提前准备会话编号。
+     *
+     * @param request AI 对话请求，包含 Provider、可选会话编号和用户消息
+     * @return 已存在或新创建的会话编号
+     */
+    String ensureConversation(AiChatRequest request);
+
+    /**
      * 保存一轮用户输入和 AI 回复。
      *
      * @param request 用户对话请求
@@ -23,4 +31,11 @@ public interface ConversationService {
      * @return 按创建时间正序排列的消息列表
      */
     List<ConversationMessage> listMessages(String conversationId);
+
+    /**
+     * 查询最近活跃的会话列表。
+     *
+     * @return 按更新时间倒序排列的会话列表
+     */
+    List<Conversation> listConversations();
 }

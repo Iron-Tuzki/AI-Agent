@@ -3,6 +3,7 @@ package com.example.agent.infrastructure.chat;
 import com.example.agent.domain.chat.AiChatRequest;
 import com.example.agent.domain.chat.AiChatResult;
 import com.example.agent.domain.chat.ConversationMessage;
+import com.example.agent.domain.chat.Conversation;
 import com.example.agent.domain.chat.ConversationMessageRepository;
 import com.example.agent.domain.chat.ConversationRepository;
 import com.example.agent.domain.chat.ConversationService;
@@ -27,6 +28,12 @@ public class PersistentConversationService implements ConversationService {
 
     @Override
     @Transactional
+    public String ensureConversation(AiChatRequest request) {
+        return delegate.ensureConversation(request);
+    }
+
+    @Override
+    @Transactional
     public String saveTurn(AiChatRequest request, AiChatResult result) {
         return delegate.saveTurn(request, result);
     }
@@ -35,5 +42,11 @@ public class PersistentConversationService implements ConversationService {
     @Transactional(readOnly = true)
     public List<ConversationMessage> listMessages(String conversationId) {
         return delegate.listMessages(conversationId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Conversation> listConversations() {
+        return delegate.listConversations();
     }
 }

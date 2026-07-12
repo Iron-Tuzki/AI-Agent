@@ -111,6 +111,39 @@ class DefaultConversationServiceTest {
         assertEquals("你好", messages.get(0).content());
     }
 
+    @Test
+    void shouldEnsureConversationBeforeStreamingWhenConversationIdIsBlank() {
+        FakeConversationRepository conversationRepository = new FakeConversationRepository();
+        DefaultConversationService service = new DefaultConversationService(
+                conversationRepository,
+                new FakeConversationMessageRepository()
+        );
+
+        String conversationId = service.ensureConversation(
+                new AiChatRequest(AiProvider.SPRING_AI, null, "什么是 Java Agent？")
+        );
+
+        assertFalse(conversationId.isBlank());
+        assertEquals("什么是 Java Agent？", conversationRepository.conversations.get(conversationId).title());
+    }
+
+    @Test
+    void shouldReuseExistingConversationWhenEnsuringConversation() {
+        FakeConversationRepository conversationRepository = new FakeConversationRepository();
+        LocalDateTime now = LocalDateTime.now();
+        conversationRepository.save(new Conversation(
+                "c001", "已有会话", AiProvider.SPRING_AI, ConversationStatus.ACTIVE, now, now
+        ));
+        DefaultConversationService service = new DefaultConversationService(
+                conversationRepository,
+                new FakeConversationMessageRepository()
+        );
+
+        assertEquals("c001", service.ensureConversation(
+                new AiChatRequest(AiProvider.SPRING_AI, "c001", "继续解释")
+        ));
+    }
+
     private static class FakeConversationRepository implements ConversationRepository {
 
         private final Map<String, Conversation> conversations = new LinkedHashMap<>();
@@ -136,6 +169,11 @@ class DefaultConversationServiceTest {
                     conversation.createdAt(),
                     updatedAt
             ));
+        }
+
+        @Override
+        public List<Conversation> findAllOrderByUpdatedAtDesc() {
+            return conversations.values().stream().toList();
         }
     }
 

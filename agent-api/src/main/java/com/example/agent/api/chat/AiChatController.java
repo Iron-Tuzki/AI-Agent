@@ -8,6 +8,7 @@ import com.example.agent.domain.chat.ConversationService;
 import com.example.agent.domain.exception.AgentBusinessException;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -57,8 +58,26 @@ public class AiChatController {
      * @return AI 回复内容片段流
      */
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> stream(@Valid @RequestBody AiChatRequest request) {
-        return resolveService(request).stream(request);
+    public Flux<ServerSentEvent<String>> stream(@Valid @RequestBody AiChatRequest request) {
+        AiChatService service = resolveService(request);
+        String conversationId = conversationService.ensureConversation(request);
+        AiChatRequest conversationRequest = new AiChatRequest(request.provider(), conversationId, request.message());
+        StringBuilder content = new StringBuilder();
+        return Flux.concat(
+                        Flux.just(ServerSentEvent.<String>builder()
+                                .event("conversation")
+                                .data("{\"conversationId\":\"" + conversationId + "\"}")
+                                .build()),
+                        service.stream(conversationRequest)
+                                .doOnNext(content::append)
+                                .map(chunk -> ServerSentEvent.<String>builder().data(chunk).build())
+                                .doOnComplete(() -> {
+                                    conversationService.saveTurn(
+                                            conversationRequest,
+                                            new AiChatResult(conversationId, request.provider(), content.toString(), null, null)
+                                    );
+                                })
+                );
     }
 
     private AiChatService resolveService(AiChatRequest request) {

@@ -2,6 +2,7 @@ package com.example.agent.domain.chat;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.List;
 
 /**
  * 会话仓储接口，用于屏蔽会话元信息的具体持久化实现。
@@ -30,4 +31,11 @@ public interface ConversationRepository {
      * @param updatedAt 更新时间
      */
     void updateTime(String conversationId, LocalDateTime updatedAt);
+
+    /**
+     * 按最近更新时间倒序查询会话列表。
+     *
+     * @return 会话列表
+     */
+    List<Conversation> findAllOrderByUpdatedAtDesc();
 }
