@@ -4,6 +4,7 @@ import com.example.agent.api.common.ApiResponse;
 import com.example.agent.domain.chat.AiChatRequest;
 import com.example.agent.domain.chat.AiChatResult;
 import com.example.agent.domain.chat.AiChatService;
+import com.example.agent.domain.chat.ConversationService;
 import com.example.agent.domain.exception.AgentBusinessException;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
@@ -23,9 +24,11 @@ import java.util.List;
 public class AiChatController {
 
     private final List<AiChatService> chatServices;
+    private final ConversationService conversationService;
 
-    public AiChatController(List<AiChatService> chatServices) {
+    public AiChatController(List<AiChatService> chatServices, ConversationService conversationService) {
         this.chatServices = chatServices;
+        this.conversationService = conversationService;
     }
 
     /**
@@ -36,7 +39,15 @@ public class AiChatController {
      */
     @PostMapping("/chat")
     public ApiResponse<AiChatResult> chat(@Valid @RequestBody AiChatRequest request) {
-        return ApiResponse.ok(resolveService(request).chat(request));
+        AiChatResult result = resolveService(request).chat(request);
+        String conversationId = conversationService.saveTurn(request, result);
+        return ApiResponse.ok(new AiChatResult(
+                conversationId,
+                result.provider(),
+                result.content(),
+                result.promptTokens(),
+                result.completionTokens()
+        ));
     }
 
     /**

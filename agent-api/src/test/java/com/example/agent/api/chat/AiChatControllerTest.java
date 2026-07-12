@@ -3,6 +3,7 @@ package com.example.agent.api.chat;
 import com.example.agent.api.common.GlobalExceptionHandler;
 import com.example.agent.domain.chat.AiChatResult;
 import com.example.agent.domain.chat.AiChatService;
+import com.example.agent.domain.chat.ConversationService;
 import com.example.agent.domain.provider.AiProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -29,12 +31,16 @@ class AiChatControllerTest {
     @MockitoBean
     private AiChatService chatService;
 
+    @MockitoBean
+    private ConversationService conversationService;
+
     @Test
     void shouldReturnChatResultWhenProviderIsSupported() throws Exception {
         when(chatService.supports(AiProvider.SPRING_AI)).thenReturn(true);
         when(chatService.chat(any())).thenReturn(
                 new AiChatResult("c001", AiProvider.SPRING_AI, "Java Agent 是工程化的 AI 应用。", 10, 20)
         );
+        when(conversationService.saveTurn(any(), any())).thenReturn("c001");
 
         mockMvc.perform(post("/api/ai/chat")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -51,6 +57,8 @@ class AiChatControllerTest {
                 .andExpect(jsonPath("$.data.conversationId").value("c001"))
                 .andExpect(jsonPath("$.data.provider").value("SPRING_AI"))
                 .andExpect(jsonPath("$.data.content").value("Java Agent 是工程化的 AI 应用。"));
+
+        verify(conversationService).saveTurn(any(), any());
     }
 
     @Test
