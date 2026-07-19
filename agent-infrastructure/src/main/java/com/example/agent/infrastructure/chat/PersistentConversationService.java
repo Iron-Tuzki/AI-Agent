@@ -8,6 +8,7 @@ import com.example.agent.domain.chat.ConversationMessageRepository;
 import com.example.agent.domain.chat.ConversationRepository;
 import com.example.agent.domain.chat.ConversationService;
 import com.example.agent.domain.chat.DefaultConversationService;
+import com.example.agent.domain.chat.MessageStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,18 @@ public class PersistentConversationService implements ConversationService {
     @Transactional
     public String saveTurn(AiChatRequest request, AiChatResult result) {
         return delegate.saveTurn(request, result);
+    }
+
+    @Override
+    @Transactional
+    public void saveUserMessage(AiChatRequest request) {
+        delegate.saveUserMessage(request);
+    }
+
+    @Override
+    @Transactional
+    public void saveAssistantMessage(AiChatRequest request, AiChatResult result, MessageStatus status) {
+        delegate.saveAssistantMessage(request, result, status);
     }
 
     @Override

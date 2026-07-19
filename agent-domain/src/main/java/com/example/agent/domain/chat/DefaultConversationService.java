@@ -60,6 +60,44 @@ public class DefaultConversationService implements ConversationService {
     }
 
     @Override
+    public void saveUserMessage(AiChatRequest request) {
+        LocalDateTime now = LocalDateTime.now();
+        String conversationId = resolveConversationId(request, now);
+        messageRepository.save(new ConversationMessage(
+                nextId(),
+                conversationId,
+                ConversationRole.USER,
+                request.message(),
+                MessageStatus.SUCCESS,
+                request.provider(),
+                null,
+                null,
+                now,
+                now
+        ));
+        conversationRepository.updateTime(conversationId, now);
+    }
+
+    @Override
+    public void saveAssistantMessage(AiChatRequest request, AiChatResult result, MessageStatus status) {
+        LocalDateTime now = LocalDateTime.now();
+        String conversationId = resolveConversationId(request, now);
+        messageRepository.save(new ConversationMessage(
+                nextId(),
+                conversationId,
+                ConversationRole.ASSISTANT,
+                result.content(),
+                status,
+                result.provider(),
+                result.promptTokens(),
+                result.completionTokens(),
+                now,
+                now
+        ));
+        conversationRepository.updateTime(conversationId, now);
+    }
+
+    @Override
     public List<ConversationMessage> listMessages(String conversationId) {
         if (conversationId == null || conversationId.isBlank()) {
             throw new AgentBusinessException("会话编号不能为空");

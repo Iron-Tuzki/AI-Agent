@@ -5,6 +5,7 @@ import com.example.agent.domain.chat.AiChatRequest;
 import com.example.agent.domain.chat.AiChatResult;
 import com.example.agent.domain.chat.AiChatService;
 import com.example.agent.domain.chat.ConversationService;
+import com.example.agent.domain.chat.MessageStatus;
 import com.example.agent.domain.exception.AgentBusinessException;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.SignalType;
 
 import java.util.List;
 
@@ -62,6 +64,8 @@ public class AiChatController {
         AiChatService service = resolveService(request);
         String conversationId = conversationService.ensureConversation(request);
         AiChatRequest conversationRequest = new AiChatRequest(request.provider(), conversationId, request.message());
+        // 先保存用户消息
+        conversationService.saveUserMessage(conversationRequest);
         StringBuilder content = new StringBuilder();
         return Flux.concat(
                         Flux.just(ServerSentEvent.<String>builder()
@@ -71,10 +75,14 @@ public class AiChatController {
                         service.stream(conversationRequest)
                                 .doOnNext(content::append)
                                 .map(chunk -> ServerSentEvent.<String>builder().data(chunk).build())
-                                .doOnComplete(() -> {
-                                    conversationService.saveTurn(
+                                .doFinally(signalType -> {
+                                    MessageStatus status = signalType == SignalType.ON_COMPLETE
+                                            ? MessageStatus.SUCCESS
+                                            : MessageStatus.FAILED;
+                                    conversationService.saveAssistantMessage(
                                             conversationRequest,
-                                            new AiChatResult(conversationId, request.provider(), content.toString(), null, null)
+                                            new AiChatResult(conversationId, request.provider(), content.toString(), null, null),
+                                            status
                                     );
                                 })
                 );

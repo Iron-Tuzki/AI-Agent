@@ -25,6 +25,22 @@ public interface ConversationService {
     String saveTurn(AiChatRequest request, AiChatResult result);
 
     /**
+     * 保存流式对话中的用户消息。
+     *
+     * @param request AI 对话请求，包含会话编号、提供方和用户消息
+     */
+    void saveUserMessage(AiChatRequest request);
+
+    /**
+     * 保存流式对话中的助手消息。
+     *
+     * @param request AI 对话请求，包含会话编号和提供方
+     * @param result AI 回复结果，包含已经生成的回复内容
+     * @param status 助手消息状态，正常完成时为 SUCCESS，异常或中断时为 FAILED
+     */
+    void saveAssistantMessage(AiChatRequest request, AiChatResult result, MessageStatus status);
+
+    /**
      * 查询指定会话下的消息列表。
      *
      * @param conversationId 会话编号
